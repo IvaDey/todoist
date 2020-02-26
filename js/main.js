@@ -6,7 +6,7 @@ class TodoItem extends React.Component {
         this.state = {
             id: props.id,
             taskName: props.taskName,
-            isDone: false
+            isDone: props.isDone
         }
     }
 
@@ -20,7 +20,7 @@ class TodoItem extends React.Component {
                 'span',
                 {
                     className: this.state.isDone ? 'done' : '',
-                    onClick: () => this.setState({isDone: !this.state.isDone})
+                    onClick: () => this.props.toggleDone(this.state.id)
                 },
                 this.state.taskName
             ),
@@ -28,7 +28,6 @@ class TodoItem extends React.Component {
                 'button',
                 {
                     onClick: () => {
-                        console.log('Item (' + this.state.id + ') should be deleted.')
                         this.props.deleteItem(this.state.id)
                     }
                 },
@@ -61,7 +60,7 @@ class TodoForm extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            tasks: []//[1, 2, 3, 4, 5]
+            tasks: []
         }
     }
 
@@ -69,7 +68,8 @@ class TodoForm extends React.Component {
         if (newItem !== '') {
             newItem = {
                 id: Date.now(),
-                text: newItem
+                text: newItem,
+                isDone: false
             }
             const items = [...this.state.tasks, newItem]
             this.setState({
@@ -78,15 +78,19 @@ class TodoForm extends React.Component {
         }
     }
 
+    toggleDone = key => {
+        const newTasks = this.state.tasks.map(item => {
+            if (item.id === key) item.isDone = !item.isDone
+            return item
+        })
+
+        this.setState({
+            tasks: newTasks
+        })
+    }
 
     deleteItem = key => {
         let filteredItems = this.state.tasks.filter(item => item.id !== key)
-        // filteredItems[key] = 'removed'
-
-        console.log('')
-        console.log(key)
-        console.log(filteredItems)
-        console.log('----')
 
         this.setState({
             tasks: filteredItems
@@ -94,14 +98,39 @@ class TodoForm extends React.Component {
     }
 
     render() {
-        const tasksList = this.state.tasks.map((item) => React.createElement(TodoItem, { id: item.id, key: item.id, taskName: item.text, deleteItem: this.deleteItem }))
+        const undoneTasks = this.state.tasks.map((item) => {
+            if (!item.isDone)
+                return React.createElement(
+                    TodoItem,
+                    {
+                        id: item.id,
+                        key: item.id,
+                        taskName: item.text,
+                        isDone: item.isDone,
+                        deleteItem: this.deleteItem,
+                        toggleDone: this.toggleDone
+                    })
+        })
+        const doneTasks = this.state.tasks.map((item) => {
+            if (item.isDone)
+                return React.createElement(
+                    TodoItem,
+                    {
+                        id: item.id,
+                        key: item.id,
+                        taskName: item.text,
+                        isDone: item.isDone,
+                        deleteItem: this.deleteItem,
+                        toggleDone: this.toggleDone
+                    })
+        })
 
-        console.log('--+--')
-        console.log(this.state.tasks)
-        console.log(tasksList)
-        console.log('--+--')
-
-        return React.createElement("div", { className: 'react-app' }, React.createElement(InputField, {addItem: this.addItem}), tasksList);
+        return React.createElement(
+            "div",
+            { className: 'react-app' },
+            React.createElement(InputField, {addItem: this.addItem}),
+            undoneTasks,
+            doneTasks);
 
     }
 }
